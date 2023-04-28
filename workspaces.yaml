@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Amazon WorkSpaces Template
+
+Mappings:
+  WSTypeMap:
+    Standard-Win2016-Desktop:
+      BundleId: wsb-clj85qzj1
+    Standard-Win2019-Desktop:
+      BundleId: wsb-gk1wpk43z
+    Ubuntu-Linux-Desktop:
+      BundleId: wsb-clj85qzj1
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "WorkSpace Configuration"
+        Parameters:
+          - pDirectory
+          - pUsername
+          - pWorkstationType
+          - pEncryptionKey
+          - pRunningModeType
+      - Label:
+          default: Tagging Configuration
+        Parameters:
+          - pTagEnvironment
+          - pTagProductName
+    ParameterLabels:
+      pDirectory:
+        default: "WorkSpace Directory"
+      pUsername:
+        default: "WorkSpace User"
+      pEncryptionKey:
+        default: "Encryption Key Arn"
+      pRunningModeType:
+        default: "Running Mode"
+      pWorkstationType:
+        default: "Workstation Type"
+
+
+Parameters:
+  pWorkstationType:
+    AllowedValues:
+      - Standard-Win2016-Desktop
+      - Standard-Win2019-Desktop
+      - Ubuntu-Linux-Desktop
+    Description: Select the type of workstation
+    Default: Standard-Win2019-Desktop
+    Type: String
+  pDirectory:
+    Type: String
+    Description: Enter the Managed Directory ID for the WorkSpace (Or the AD Connector ID)
+    Default: d-1234567890
+  pUsername:
+    Type: String
+    Description: Workspaces AD user
+    AllowedPattern: ^[a-z0-9]{1,20}$
+    ConstraintDescription: Lower case letters and numbers and a maximum of 20 characters      
+  pEncryptionKey:
+    Type: String
+    Description: Enter the KMS encryption key ARN to encrypt WorkSpace volumes
+    Default: arn:aws:kms:eu-west-1:0123456789:key/aaaaaa-bbbbbbbb-ccccccc-ddddddddd
+  pRunningModeType:
+    Type: String
+    Description: Select Running Mode
+    AllowedValues:
+      - ALWAYS_ON
+      - AUTO_STOP  
+    Default: "AUTO_STOP"
+  pTagEnvironment:
+    Type: String
+    Description: Select the Environment Name
+    AllowedValues:
+      - Production
+      - Development
+    Default: Production
+  pTagProductName:
+    Type: String
+    Description: Select the Product Name
+    Default: Workspaces
+
+Resources:
+
+  rWorkSpaceEncrypted:
+    Type: AWS::WorkSpaces::Workspace
+    Properties:
+      BundleId: !FindInMap
+        - WSTypeMap
+        - !Ref 'pWorkstationType'
+        - BundleId
+      DirectoryId: !Ref pDirectory
+      UserName: !Ref pUsername
+      RootVolumeEncryptionEnabled: true
+      UserVolumeEncryptionEnabled: true
+      VolumeEncryptionKey: !Ref pEncryptionKey
+      WorkspaceProperties:
+        RunningMode: !Ref pRunningModeType
+      Tags:
+        - Key: Name
+          Value: !Sub ${pTagProductName}-${pUsername}
+        - Key: Environment
+          Value: !Ref pTagEnvironment
+
+Outputs:
+  WorkSpaceId:
+    Description: WorkSpace ID
+    Value: !Ref rWorkSpaceEncrypted
+  UserName:
+    Description: WorkSpace User
+    Value: !Ref pUsername
+  LogonURL:
+    Description: Download the client software to connect to your Workspace
+    Value: 'https://clients.amazonworkspaces.com/'
