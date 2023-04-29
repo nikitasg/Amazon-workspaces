@@ -7,7 +7,7 @@
 - workspaces.yaml
 
 ### Usage
-*  Upload [workspaces.yaml](workspaces.yaml) in your artifacts bucket
+*  Update the required values and then Upload [workspaces.yaml](workspaces.yaml) in your artifacts bucket
 *  Update [sc-workspaces.yaml](sc-workspaces.yaml) with the S3 URL for that file
 *  In AWS console, navigate to Cloudfromation. Deploy [sc-workspaces.yaml](sc-workspaces.yaml) 
 
